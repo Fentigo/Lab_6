@@ -1,0 +1,54 @@
+name: CI/CD
+
+on:
+  push:
+    branches: # this allows us to automatically trigger this workflow when you push to the main branch
+      - main
+  workflow_dispatch: #this allows us to manually trigger the workflow from the Actions page 
+
+jobs:  # a workflow is made up of one or more jobs, each job runs in a separate virutal machine
+  test-build-deploy: 
+  # this grants permissions required to make a deployment to github Pages. 
+    permissions: 
+      pages: write # to deploy to pages
+      id-token: write # to verify the deployment comes from an appropriate source 
+
+    environment: 
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    #specify the Os we want to run this job on: 
+    runs-on: ubuntu-latest
+
+    steps:   # this contains a list of the different steps in the this job 
+      # this grabs the latest code from the main branch. 
+        - name: Checkout
+          uses: actions/checkout@v3 # uses an action that has already been created 
+        - name: set up node
+          uses: actions/setup-node@v3 # another action that's already been created
+          with:
+            node-version: "20.5.0"
+
+        - run: npm ci # now we can install the dependencies
+
+        - run: npm test # now we can run jest unit tests
+
+        - run: npm run build # this lets us build our appliactio. This app is then built to the /dist foler
+
+        - name: set up pages # this sets up GitHub Pages
+          uses: actions/configure-pages@v3
+
+        - name: Upload artifact  # this uploads the build artifact (the contents of the /distfolder) to githubpages
+          uses: actions/upload-pages-artifact@v2
+          with: 
+            path: './dist'
+
+          # finally this step deploys our application to the live pages
+          - name: Deploy to gitubPages 
+            id: deployment
+            uses: actions/deploy-pages@v2
+            
+          
+    
+    
+    
